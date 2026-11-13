@@ -1,0 +1,48 @@
+relationship ccf2458d-5dde-5183-8773-24f1b7289010
+	joinOnDateBehavior: datePartOnly
+	fromColumn: Transactions.Date
+	toColumn: Calendar.Date
+
+relationship d0ea7c4d-69e3-58cf-9623-6ebded10ee28
+	fromColumn: Transactions.StoreID
+	toColumn: Stores.StoreID
+
+relationship 1770b4f3-f191-5bd1-b583-08c8398e7966
+	fromColumn: Transactions.MemberID
+	toColumn: Members.MemberID
+
+relationship f21f635a-1d69-51ee-a3b9-775e55c08698
+	joinOnDateBehavior: datePartOnly
+	fromColumn: Redemptions.Date
+	toColumn: Calendar.Date
+
+relationship ab1be053-c79d-5f96-ac81-6262697b5353
+	fromColumn: Redemptions.StoreID
+	toColumn: Stores.StoreID
+
+relationship 397d3fa2-834f-5974-9ad1-37d80aaed8dd
+	fromColumn: Redemptions.MemberID
+	toColumn: Members.MemberID
+
+relationship dd43a635-5628-5f57-a4c3-f08d39e3f8c4
+	fromColumn: Redemptions.RewardID
+	toColumn: Rewards.RewardID
+
+relationship b4e73293-2aeb-5a0c-a710-3014ea3c814d
+	joinOnDateBehavior: datePartOnly
+	fromColumn: 'Campaign Enrollments'.EnrolledDate
+	toColumn: Calendar.Date
+
+relationship 70fe4215-b8ea-54a2-9a84-ab645919e2ce
+	isActive: false
+	joinOnDateBehavior: datePartOnly
+	fromColumn: 'Campaign Enrollments'.CompletedDate
+	toColumn: Calendar.Date
+
+relationship 56d4dabf-cc4c-5cbe-8c4f-49425af7164f
+	fromColumn: 'Campaign Enrollments'.CampaignID
+	toColumn: Campaigns.CampaignID
+
+relationship 88091686-1974-5081-bcda-a0d393c976a4
+	fromColumn: 'Campaign Enrollments'.MemberID
+	toColumn: Members.MemberID

@@ -1,0 +1,173 @@
+table Transactions
+	lineageTag: 9310e03a-9f0a-576d-8ab2-9bd7e44c8ab2
+
+	column TransactionID
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: ec3a06de-d3a9-548b-8232-653c1c00c7f3
+		summarizeBy: none
+		sourceColumn: TransactionID
+
+		annotation SummarizationSetBy = Automatic
+
+	column Date
+		dataType: dateTime
+		isHidden
+		formatString: d mmm yyyy
+		lineageTag: fc864ff5-dd94-5ee7-97c6-ced7313253ba
+		summarizeBy: none
+		sourceColumn: Date
+
+		annotation SummarizationSetBy = Automatic
+
+	column Hour
+		dataType: int64
+		formatString: 0
+		lineageTag: 25d654a3-0794-5aba-912d-0eb267f40ce9
+		summarizeBy: none
+		sourceColumn: Hour
+
+		annotation SummarizationSetBy = Automatic
+
+	column StoreID
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 6c027a5f-09cc-5ee7-ac7a-55cd0a8a778b
+		summarizeBy: none
+		sourceColumn: StoreID
+
+		annotation SummarizationSetBy = Automatic
+
+	column MemberID
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: e8d02d27-11bb-5358-afcf-820a0784cfed
+		summarizeBy: none
+		sourceColumn: MemberID
+
+		annotation SummarizationSetBy = Automatic
+
+	column Channel
+		dataType: string
+		lineageTag: acbdba0f-7df3-5b2b-bf1d-88036276613d
+		summarizeBy: none
+		sourceColumn: Channel
+
+		annotation SummarizationSetBy = Automatic
+
+	column Items
+		dataType: int64
+		isHidden
+		formatString: #,0
+		lineageTag: 36e87df9-01dc-59e3-b48c-b7caff81218c
+		summarizeBy: sum
+		sourceColumn: Items
+
+		annotation SummarizationSetBy = Automatic
+
+	column HasFood
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 51e09217-ee5b-5f89-be6e-5d414277f91e
+		summarizeBy: sum
+		sourceColumn: HasFood
+
+		annotation SummarizationSetBy = Automatic
+
+	column GrossSales
+		dataType: double
+		isHidden
+		formatString: €#,0.00
+		lineageTag: aac09a8d-85d3-5095-b3bc-c31753eccb67
+		summarizeBy: sum
+		sourceColumn: GrossSales
+
+		annotation SummarizationSetBy = Automatic
+
+	column Discount
+		dataType: double
+		isHidden
+		formatString: €#,0.00
+		lineageTag: 07a53767-894f-5d67-9169-b8825daab881
+		summarizeBy: sum
+		sourceColumn: Discount
+
+		annotation SummarizationSetBy = Automatic
+
+	column NetSales
+		dataType: double
+		isHidden
+		formatString: €#,0.00
+		lineageTag: 54d7e5b8-f061-58da-89f9-26724fd8c8b9
+		summarizeBy: sum
+		sourceColumn: NetSales
+
+		annotation SummarizationSetBy = Automatic
+
+	column PointsEarned
+		dataType: int64
+		isHidden
+		formatString: #,0
+		lineageTag: a27cd333-f7f0-5294-96e5-a61463edecfd
+		summarizeBy: sum
+		sourceColumn: PointsEarned
+
+		annotation SummarizationSetBy = Automatic
+
+	column RedemptionID
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 1cb82e2f-f4b3-5854-bed5-66c900e1d3d4
+		summarizeBy: none
+		sourceColumn: RedemptionID
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Hour Label' = FORMAT ( Transactions[Hour], "00" ) & ":00"
+		dataType: string
+		lineageTag: 16361916-36cc-5ef5-a0b6-be971e83b554
+		summarizeBy: none
+		sortByColumn: Hour
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Customer Type' = IF ( ISBLANK ( Transactions[MemberID] ), "Guest", "Member" )
+		dataType: string
+		lineageTag: 3c7f7c8e-abe5-5bd3-ad21-53dfacdb38d9
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Months Since Join' = ```
+			VAR _join = RELATED ( 'Members'[JoinDate] )
+			RETURN
+			    IF (
+			        NOT ISBLANK ( _join ),
+			        ( YEAR ( Transactions[Date] ) - YEAR ( _join ) ) * 12
+			            + MONTH ( Transactions[Date] ) - MONTH ( _join )
+			    )
+			```
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 286a65c3-5c4a-5ff9-b6ef-9e3014d24186
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	partition Transactions = m
+		mode: import
+		source =
+				let
+				    Source = Csv.Document(File.Contents(DataFolder & "fact_transactions.csv"), [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]),
+				    Promoted = Table.PromoteHeaders(Source, [PromoteAllScalars = true]),
+				    Typed = Table.TransformColumnTypes(Promoted, {{"TransactionID", Int64.Type}, {"Date", type date}, {"Hour", Int64.Type}, {"StoreID", Int64.Type}, {"MemberID", Int64.Type}, {"Channel", type text}, {"Items", Int64.Type}, {"HasFood", Int64.Type}, {"GrossSales", type number}, {"Discount", type number}, {"NetSales", type number}, {"PointsEarned", Int64.Type}, {"RedemptionID", Int64.Type}}, "en-US")
+				in
+				    Typed
+
+	annotation PBI_ResultType = Table

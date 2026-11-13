@@ -1,0 +1,29 @@
+StoreID,StoreName,City,Region,Format,OpenDate,SeatingCapacity
+101,Northbean Alfama,Lisbon,Lisbon Metro,Flagship,2019-04-12,80
+102,Northbean Chiado,Lisbon,Lisbon Metro,Café,2020-02-03,40
+103,Northbean Belém,Lisbon,Lisbon Metro,Café,2021-06-21,40
+104,Northbean Parque das Nações,Lisbon,Lisbon Metro,Café,2021-11-08,40
+105,Northbean Saldanha,Lisbon,Lisbon Metro,Kiosk,2022-03-14,0
+106,Northbean Cais do Sodré,Lisbon,Lisbon Metro,Kiosk,2022-09-01,0
+107,Northbean Oeiras,Oeiras,Lisbon Metro,Drive-thru,2023-05-19,12
+108,Northbean Cascais,Cascais,Lisbon Metro,Café,2023-07-07,40
+109,Northbean Sintra,Sintra,Lisbon Metro,Café,2025-06-02,40
+110,Northbean Ribeira,Porto,North,Flagship,2019-10-01,80
+111,Northbean Boavista,Porto,North,Café,2020-09-15,40
+112,Northbean Bolhão,Porto,North,Kiosk,2021-04-30,0
+113,Northbean Matosinhos,Matosinhos,North,Drive-thru,2022-06-10,12
+114,Northbean Gaia,Vila Nova de Gaia,North,Café,2023-02-20,40
+115,Northbean Braga Centro,Braga,North,Café,2022-11-11,40
+116,Northbean Guimarães,Guimarães,North,Kiosk,2024-03-04,0
+117,Northbean Aveiro,Aveiro,North,Café,2025-09-15,40
+118,Northbean Coimbra Baixa,Coimbra,Centre,Café,2021-01-18,40
+119,Northbean Coimbra Universidade,Coimbra,Centre,Kiosk,2022-10-03,0
+120,Northbean Leiria,Leiria,Centre,Café,2023-09-25,40
+121,Northbean Viseu,Viseu,Centre,Drive-thru,2024-05-13,12
+122,Northbean Faro Marina,Faro,Algarve,Café,2020-05-29,40
+123,Northbean Lagos,Lagos,Algarve,Café,2021-05-14,40
+124,Northbean Albufeira,Albufeira,Algarve,Kiosk,2022-06-24,0
+125,Northbean Portimão,Portimão,Algarve,Drive-thru,2023-04-07,12
+126,Northbean Tavira,Tavira,Algarve,Kiosk,2024-06-28,0
+127,Northbean Évora,Évora,Centre,Café,2023-12-01,40
+128,Northbean Setúbal,Setúbal,Lisbon Metro,Drive-thru,2026-03-02,12

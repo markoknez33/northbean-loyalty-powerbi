@@ -1,0 +1,25 @@
+model Model
+	culture: en-US
+	defaultPowerBIDataSourceVersion: powerBI_V3
+	discourageImplicitMeasures
+	sourceQueryCulture: en-US
+	dataAccessOptions
+		legacyRedirects
+		returnErrorValuesAsNull
+
+annotation PBI_QueryOrder = ["DataFolder", "Stores", "Members", "Rewards", "Campaigns", "Transactions", "Redemptions", "Campaign Enrollments"]
+
+annotation __PBI_TimeIntelligenceEnabled = 0
+
+annotation PBI_ProTooling = ["DevMode"]
+
+ref table Stores
+ref table Members
+ref table Rewards
+ref table Campaigns
+ref table Transactions
+ref table Redemptions
+ref table 'Campaign Enrollments'
+ref table Calendar
+ref table 'Cohort Offset'
+ref table _Measures

@@ -1,0 +1,13 @@
+CampaignID,CampaignName,Mechanic,CampaignType,StartDate,EndDate,RewardPoints
+1,"New Year, New Ritual",Visit 8 times in January,Frequency,2025-01-02,2025-01-31,800
+2,Spring Blend Explorer,Try 3 seasonal drinks,Product trial,2025-03-20,2025-04-20,600
+3,Morning Streak,5 visits before 10am in 2 weeks,Daypart,2025-05-05,2025-05-18,500
+4,Summer Cold Brew Club,Buy 6 cold brews,Product trial,2025-06-16,2025-08-31,900
+5,Bring a Friend,Refer a friend who joins,Acquisition,2025-10-01,2025-10-31,1000
+6,Pastry Pairing,Add food to 5 orders,Basket,2025-11-10,2025-12-07,600
+7,Order Ahead Week,3 mobile orders in a week,Digital,2026-02-02,2026-02-15,450
+8,Spring Blend Explorer II,Try 3 seasonal drinks,Product trial,2026-03-20,2026-04-20,600
+9,Morning Streak II,5 visits before 10am in 2 weeks,Daypart,2026-05-11,2026-05-24,500
+10,Summer Cold Brew Club II,Buy 6 cold brews,Product trial,2026-06-15,2026-08-31,900
+11,Bring a Friend II,Refer a friend who joins,Acquisition,2026-09-01,2026-09-30,1000
+12,Autumn Loyalty Sprint,Spend €60 in October,Spend,2026-10-01,2026-10-31,1200

@@ -1,0 +1,74 @@
+table 'Campaign Enrollments'
+	lineageTag: 300c0195-3f70-5334-b5bb-24ac7fcbaae0
+
+	column EnrollmentID
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 656bc7b7-b332-5009-a008-f3f700d0f65e
+		summarizeBy: none
+		sourceColumn: EnrollmentID
+
+		annotation SummarizationSetBy = Automatic
+
+	column CampaignID
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 9e4f8cf1-dd39-50f5-bad2-01663912cd0f
+		summarizeBy: none
+		sourceColumn: CampaignID
+
+		annotation SummarizationSetBy = Automatic
+
+	column MemberID
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 5cb4b195-1ca7-567a-9f73-013cd68b90e7
+		summarizeBy: none
+		sourceColumn: MemberID
+
+		annotation SummarizationSetBy = Automatic
+
+	column EnrolledDate
+		dataType: dateTime
+		isHidden
+		formatString: d mmm yyyy
+		lineageTag: fc22e0dd-168f-512e-b33b-d69993051026
+		summarizeBy: none
+		sourceColumn: EnrolledDate
+
+		annotation SummarizationSetBy = Automatic
+
+	column CompletedDate
+		dataType: dateTime
+		isHidden
+		formatString: d mmm yyyy
+		lineageTag: 5874a02f-d636-59ab-af5b-3a76b21a3fd1
+		summarizeBy: none
+		sourceColumn: CompletedDate
+
+		annotation SummarizationSetBy = Automatic
+
+	column PointsAwarded
+		dataType: int64
+		isHidden
+		formatString: #,0
+		lineageTag: 268cbaa6-55e5-5e1e-b70c-57a9747efd53
+		summarizeBy: sum
+		sourceColumn: PointsAwarded
+
+		annotation SummarizationSetBy = Automatic
+
+	partition 'Campaign Enrollments' = m
+		mode: import
+		source =
+				let
+				    Source = Csv.Document(File.Contents(DataFolder & "fact_campaign_enrollments.csv"), [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]),
+				    Promoted = Table.PromoteHeaders(Source, [PromoteAllScalars = true]),
+				    Typed = Table.TransformColumnTypes(Promoted, {{"EnrollmentID", Int64.Type}, {"CampaignID", Int64.Type}, {"MemberID", Int64.Type}, {"EnrolledDate", type date}, {"CompletedDate", type date}, {"PointsAwarded", Int64.Type}}, "en-US")
+				in
+				    Typed
+
+	annotation PBI_ResultType = Table

@@ -1,0 +1,268 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.11.0/schema.json",
+  "name": "53093c04082bdcc8d6a3",
+  "position": {
+    "x": 124,
+    "y": 354,
+    "z": 2400,
+    "height": 222,
+    "width": 928,
+    "tabOrder": 2400
+  },
+  "visual": {
+    "visualType": "tableEx",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Campaigns"
+                    }
+                  },
+                  "Property": "CampaignName"
+                }
+              },
+              "queryRef": "Campaigns.CampaignName",
+              "nativeQueryRef": "CampaignName",
+              "displayName": "Campaign"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Campaigns"
+                    }
+                  },
+                  "Property": "CampaignType"
+                }
+              },
+              "queryRef": "Campaigns.CampaignType",
+              "nativeQueryRef": "CampaignType",
+              "displayName": "Type"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Campaigns"
+                    }
+                  },
+                  "Property": "StartDate"
+                }
+              },
+              "queryRef": "Campaigns.StartDate",
+              "nativeQueryRef": "StartDate",
+              "displayName": "Start"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Enrollments"
+                }
+              },
+              "queryRef": "_Measures.Enrollments",
+              "nativeQueryRef": "Enrollments",
+              "displayName": "Enrolled"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Completion Rate %"
+                }
+              },
+              "queryRef": "_Measures.Completion Rate %",
+              "nativeQueryRef": "Completion Rate %",
+              "displayName": "Completion"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Participant Spend / Member"
+                }
+              },
+              "queryRef": "_Measures.Participant Spend / Member",
+              "nativeQueryRef": "Participant Spend / Member",
+              "displayName": "Spend / participant"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Non-participant Spend / Member"
+                }
+              },
+              "queryRef": "_Measures.Non-participant Spend / Member",
+              "nativeQueryRef": "Non-participant Spend / Member",
+              "displayName": "Spend / other member"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Spend Uplift %"
+                }
+              },
+              "queryRef": "_Measures.Spend Uplift %",
+              "nativeQueryRef": "Spend Uplift %",
+              "displayName": "Uplift"
+            }
+          ]
+        }
+      },
+      "sortDefinition": {
+        "sort": [
+          {
+            "field": {
+              "Column": {
+                "Expression": {
+                  "SourceRef": {
+                    "Entity": "Campaigns"
+                  }
+                },
+                "Property": "StartDate"
+              }
+            },
+            "direction": "Ascending"
+          }
+        ],
+        "isDefaultSort": false
+      }
+    },
+    "objects": {
+      "values": [
+        {
+          "properties": {
+            "backColor": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "FillRule": {
+                      "Input": {
+                        "Measure": {
+                          "Expression": {
+                            "SourceRef": {
+                              "Entity": "_Measures"
+                            }
+                          },
+                          "Property": "Completion Rate %"
+                        }
+                      },
+                      "FillRule": {
+                        "linearGradient2": {
+                          "min": {
+                            "color": {
+                              "Literal": {
+                                "Value": "'#1B1511'"
+                              }
+                            }
+                          },
+                          "max": {
+                            "color": {
+                              "Literal": {
+                                "Value": "'#2F7F67'"
+                              }
+                            }
+                          },
+                          "nullColoringStrategy": {
+                            "strategy": {
+                              "Literal": {
+                                "Value": "'asZero'"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "selector": {
+            "data": [
+              {
+                "dataViewWildcard": {
+                  "matchingOption": 1
+                }
+              }
+            ],
+            "metadata": "_Measures.Completion Rate %"
+          }
+        },
+        {
+          "properties": {
+            "fontColor": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Measure": {
+                      "Expression": {
+                        "SourceRef": {
+                          "Entity": "_Measures"
+                        }
+                      },
+                      "Property": "Uplift Font Colour"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "selector": {
+            "data": [
+              {
+                "dataViewWildcard": {
+                  "matchingOption": 1
+                }
+              }
+            ],
+            "metadata": "_Measures.Spend Uplift %"
+          }
+        }
+      ],
+      "total": [
+        {
+          "properties": {
+            "totals": {
+              "expr": {
+                "Literal": {
+                  "Value": "false"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

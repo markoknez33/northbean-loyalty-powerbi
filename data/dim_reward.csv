@@ -1,0 +1,7 @@
+RewardID,RewardName,RewardCategory,PointsRequired,UnitCost
+1,Free Espresso,Drink,600,0.38
+2,Free Pastry,Food,900,0.7
+3,Any Handcrafted Drink,Drink,1500,0.95
+4,Breakfast Combo,Food,2500,2.1
+5,250g Bag of Beans,Retail,4000,3.6
+6,Northbean Tumbler,Merch,6000,5.2

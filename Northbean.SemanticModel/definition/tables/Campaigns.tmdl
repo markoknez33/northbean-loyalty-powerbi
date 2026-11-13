@@ -1,0 +1,75 @@
+table Campaigns
+	lineageTag: ff9ec78b-2b27-58d0-aea6-2bf33400320d
+
+	column CampaignID
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: ffd7cb4e-d4e8-5125-a706-a92f1c5fa213
+		summarizeBy: none
+		sourceColumn: CampaignID
+
+		annotation SummarizationSetBy = Automatic
+
+	column CampaignName
+		dataType: string
+		lineageTag: 3bfa2e66-cb1a-5791-921e-1ae461dbdc32
+		summarizeBy: none
+		sourceColumn: CampaignName
+
+		annotation SummarizationSetBy = Automatic
+
+	column Mechanic
+		dataType: string
+		lineageTag: f41df059-7d6b-5078-9c02-dc0f89341210
+		summarizeBy: none
+		sourceColumn: Mechanic
+
+		annotation SummarizationSetBy = Automatic
+
+	column CampaignType
+		dataType: string
+		lineageTag: 5d1bbea9-b90e-5a86-999b-d6d14b459a87
+		summarizeBy: none
+		sourceColumn: CampaignType
+
+		annotation SummarizationSetBy = Automatic
+
+	column StartDate
+		dataType: dateTime
+		formatString: d mmm yyyy
+		lineageTag: 778f657a-3eca-580b-bab3-f9e8073f5ffa
+		summarizeBy: none
+		sourceColumn: StartDate
+
+		annotation SummarizationSetBy = Automatic
+
+	column EndDate
+		dataType: dateTime
+		formatString: d mmm yyyy
+		lineageTag: 668556c0-66ca-5b8f-bb4c-763ed699d5b6
+		summarizeBy: none
+		sourceColumn: EndDate
+
+		annotation SummarizationSetBy = Automatic
+
+	column RewardPoints
+		dataType: int64
+		formatString: #,0
+		lineageTag: 444a8784-46d4-55ad-bad4-d255fcb5ac6f
+		summarizeBy: none
+		sourceColumn: RewardPoints
+
+		annotation SummarizationSetBy = Automatic
+
+	partition Campaigns = m
+		mode: import
+		source =
+				let
+				    Source = Csv.Document(File.Contents(DataFolder & "dim_campaign.csv"), [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]),
+				    Promoted = Table.PromoteHeaders(Source, [PromoteAllScalars = true]),
+				    Typed = Table.TransformColumnTypes(Promoted, {{"CampaignID", Int64.Type}, {"CampaignName", type text}, {"Mechanic", type text}, {"CampaignType", type text}, {"StartDate", type date}, {"EndDate", type date}, {"RewardPoints", Int64.Type}}, "en-US")
+				in
+				    Typed
+
+	annotation PBI_ResultType = Table

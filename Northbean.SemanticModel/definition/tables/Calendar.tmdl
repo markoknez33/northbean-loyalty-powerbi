@@ -1,0 +1,93 @@
+table Calendar
+	dataCategory: Time
+	lineageTag: c4e70b0c-3986-581c-82f4-ca25d4f3a21d
+
+	column Date
+		dataType: dateTime
+		formatString: d mmm yyyy
+		lineageTag: 8f8149a0-74d1-51a5-8a7c-3735a44c5f94
+		isKey
+		isNameInferred
+		summarizeBy: none
+		sourceColumn: [Date]
+
+		annotation SummarizationSetBy = Automatic
+
+	column Year = YEAR ( Calendar[Date] )
+		dataType: int64
+		formatString: 0
+		lineageTag: 178c71a1-6b6e-5fd6-9ad8-eb60a7724fc3
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Month No' = MONTH ( Calendar[Date] )
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: a6696c2a-9c11-5f23-8c92-9c41b552edb5
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column Month = FORMAT ( Calendar[Date], "mmm" )
+		dataType: string
+		lineageTag: bf769212-a51f-5070-96fe-44bf63d2e8a8
+		summarizeBy: none
+		sortByColumn: 'Month No'
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Month Key' = YEAR ( Calendar[Date] ) * 100 + MONTH ( Calendar[Date] )
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: d4de409a-e2f0-5220-bafc-3e61862576f5
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Month Year' = FORMAT ( Calendar[Date], "mmm yy" )
+		dataType: string
+		lineageTag: 14fa1a1d-2466-5779-9bad-91c9a15c6fea
+		summarizeBy: none
+		sortByColumn: 'Month Key'
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Month Start' = DATE ( YEAR ( Calendar[Date] ), MONTH ( Calendar[Date] ), 1 )
+		dataType: dateTime
+		formatString: mmm yyyy
+		lineageTag: 5bdb6b9c-3074-5230-b4ea-de01f3f182b4
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column Quarter = "Q" & QUARTER ( Calendar[Date] )
+		dataType: string
+		lineageTag: 518d8590-6866-5f07-b069-7f7a4d0f9285
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Weekday No' = WEEKDAY ( Calendar[Date], 2 )
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 88dbe375-b133-50b8-ae0d-c0d1b46155dd
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column Weekday = FORMAT ( Calendar[Date], "ddd" )
+		dataType: string
+		lineageTag: 647f72b8-aff9-5db8-b448-932b4c2386eb
+		summarizeBy: none
+		sortByColumn: 'Weekday No'
+
+		annotation SummarizationSetBy = Automatic
+
+	partition Calendar = calculated
+		mode: import
+		source =
+				CALENDAR ( DATE ( 2025, 1, 1 ), DATE ( 2026, 10, 31 ) )

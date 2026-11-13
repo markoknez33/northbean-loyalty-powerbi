@@ -1,0 +1,94 @@
+table Redemptions
+	lineageTag: 5a5059e8-311b-54e7-a8da-13c98db821f1
+
+	column RedemptionID
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 8baf715b-1c5a-5d24-966d-0b4c889b4a34
+		summarizeBy: none
+		sourceColumn: RedemptionID
+
+		annotation SummarizationSetBy = Automatic
+
+	column Date
+		dataType: dateTime
+		isHidden
+		formatString: d mmm yyyy
+		lineageTag: a9f6a8cc-4e48-51d4-85d7-4e8ecece2e49
+		summarizeBy: none
+		sourceColumn: Date
+
+		annotation SummarizationSetBy = Automatic
+
+	column MemberID
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 98ce5927-e29a-5b5d-a94d-758a82438dc9
+		summarizeBy: none
+		sourceColumn: MemberID
+
+		annotation SummarizationSetBy = Automatic
+
+	column StoreID
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 5e227ec8-d860-53c5-8666-970a973e0f2f
+		summarizeBy: none
+		sourceColumn: StoreID
+
+		annotation SummarizationSetBy = Automatic
+
+	column RewardID
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: ee635a63-8b2b-52ef-840e-24c6fc89d460
+		summarizeBy: none
+		sourceColumn: RewardID
+
+		annotation SummarizationSetBy = Automatic
+
+	column PointsSpent
+		dataType: int64
+		isHidden
+		formatString: #,0
+		lineageTag: fe8e80e1-727b-5cdb-a93b-ea151b8dc7e1
+		summarizeBy: sum
+		sourceColumn: PointsSpent
+
+		annotation SummarizationSetBy = Automatic
+
+	column RewardCost
+		dataType: double
+		isHidden
+		formatString: €#,0.00
+		lineageTag: 6e909a08-5b47-5e2d-b1f7-2a54162d91de
+		summarizeBy: sum
+		sourceColumn: RewardCost
+
+		annotation SummarizationSetBy = Automatic
+
+	column DiscountValue
+		dataType: double
+		isHidden
+		formatString: €#,0.00
+		lineageTag: d6e33b5a-6ae2-5cf6-b25e-f02a19cb0365
+		summarizeBy: sum
+		sourceColumn: DiscountValue
+
+		annotation SummarizationSetBy = Automatic
+
+	partition Redemptions = m
+		mode: import
+		source =
+				let
+				    Source = Csv.Document(File.Contents(DataFolder & "fact_redemptions.csv"), [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]),
+				    Promoted = Table.PromoteHeaders(Source, [PromoteAllScalars = true]),
+				    Typed = Table.TransformColumnTypes(Promoted, {{"RedemptionID", Int64.Type}, {"Date", type date}, {"MemberID", Int64.Type}, {"StoreID", Int64.Type}, {"RewardID", Int64.Type}, {"PointsSpent", Int64.Type}, {"RewardCost", type number}, {"DiscountValue", type number}}, "en-US")
+				in
+				    Typed
+
+	annotation PBI_ResultType = Table

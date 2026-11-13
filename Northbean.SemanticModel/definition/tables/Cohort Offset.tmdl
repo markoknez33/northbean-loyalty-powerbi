@@ -1,0 +1,26 @@
+table 'Cohort Offset'
+	lineageTag: ec2a5938-460f-51a6-8fd3-28861a46e1cb
+
+	column 'Month Offset'
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: d1733bc3-c060-5285-bfb3-9bde45eb1f50
+		isNameInferred
+		summarizeBy: none
+		sourceColumn: [Month Offset]
+
+		annotation SummarizationSetBy = Automatic
+
+	column Offset = "M+" & 'Cohort Offset'[Month Offset]
+		dataType: string
+		lineageTag: 86ffffa6-7b1e-5835-944c-5cd3e005ce0b
+		summarizeBy: none
+		sortByColumn: 'Month Offset'
+
+		annotation SummarizationSetBy = Automatic
+
+	partition 'Cohort Offset' = calculated
+		mode: import
+		source =
+				SELECTCOLUMNS ( GENERATESERIES ( 1, 12, 1 ), "Month Offset", [Value] )

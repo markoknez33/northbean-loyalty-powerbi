@@ -1,0 +1,876 @@
+table _Measures
+	lineageTag: ffe10ebb-f45d-55a3-aaba-2366cb28d9ce
+
+	measure 'Net Sales' = SUM ( Transactions[NetSales] )
+		formatString: €#,0
+		displayFolder: Sales
+		lineageTag: a90bd7b9-d8ea-5629-b9bd-f89ad66b9cdc
+
+	measure Transactions = COUNTROWS ( Transactions )
+		formatString: #,0
+		displayFolder: Sales
+		lineageTag: c9842ce9-34fc-5545-bf4f-af8ca12e1d88
+
+	measure 'Avg Ticket' = DIVIDE ( [Net Sales], [Transactions] )
+		formatString: €#,0.00
+		displayFolder: Sales
+		lineageTag: 3d9e2320-5d2d-5c24-99b2-6ee753cc46d2
+
+	measure 'Member Sales' = CALCULATE ( [Net Sales], NOT ISBLANK ( Transactions[MemberID] ) )
+		formatString: €#,0
+		displayFolder: Sales
+		lineageTag: 7aa7edeb-4734-5242-875b-76b957b18944
+
+	measure 'Guest Sales' = CALCULATE ( [Net Sales], ISBLANK ( Transactions[MemberID] ) )
+		formatString: €#,0
+		displayFolder: Sales
+		lineageTag: eb9e207a-cc8b-5449-9251-a4dd2f95a596
+
+	measure 'Member Sales Share %' = DIVIDE ( [Member Sales], [Net Sales] )
+		formatString: 0.0%
+		displayFolder: Sales
+		lineageTag: a84692a1-b9ad-5d36-acc7-834f21cca8c2
+
+	measure 'Avg Ticket Members' = CALCULATE ( [Avg Ticket], NOT ISBLANK ( Transactions[MemberID] ) )
+		formatString: €#,0.00
+		displayFolder: Sales
+		lineageTag: 058e9d91-9a62-51ff-8197-64fd2362f62b
+
+	measure 'Avg Ticket Guests' = CALCULATE ( [Avg Ticket], ISBLANK ( Transactions[MemberID] ) )
+		formatString: €#,0.00
+		displayFolder: Sales
+		lineageTag: f0567fc9-0e20-53b1-8a5d-0615fca9c835
+
+	measure 'Member Ticket Uplift %' = DIVIDE ( [Avg Ticket Members], [Avg Ticket Guests] ) - 1
+		formatString: 0.0%
+		displayFolder: Sales
+		lineageTag: 4887bd87-b0b8-5fe9-baf4-a7bf6371fca9
+
+	measure 'Food Attach Rate %' = DIVIDE ( SUM ( Transactions[HasFood] ), [Transactions] )
+		formatString: 0.0%
+		displayFolder: Sales
+		lineageTag: 16331517-aa19-5743-bb19-fdc4e00ed551
+
+	measure 'Share of Weekly Traffic %' = ```
+			DIVIDE (
+			    [Transactions],
+			    CALCULATE (
+			        [Transactions],
+			        REMOVEFILTERS ( Transactions[Hour Label], Transactions[Hour] ),
+			        REMOVEFILTERS ( Calendar[Weekday], Calendar[Weekday No] )
+			    )
+			)
+			```
+		formatString: 0.0%
+		displayFolder: Sales
+		lineageTag: fddfe2a5-ec66-5699-9069-231d39188e9b
+
+	measure 'Active Members' = DISTINCTCOUNTNOBLANK ( Transactions[MemberID] )
+		formatString: #,0
+		displayFolder: Members
+		lineageTag: 82f46ac9-7739-52b5-96a7-d3db899e8b46
+
+	measure 'New Members' = ```
+			CALCULATE (
+			    COUNTROWS ( 'Members' ),
+			    TREATAS ( VALUES ( Calendar[Date] ), 'Members'[JoinDate] )
+			)
+			```
+		formatString: #,0
+		displayFolder: Members
+		lineageTag: 42b4a898-3e5b-5b98-a2b4-921c458fdec4
+
+	measure 'Visits per Member' = ```
+			DIVIDE (
+			    CALCULATE ( [Transactions], NOT ISBLANK ( Transactions[MemberID] ) ),
+			    [Active Members]
+			)
+			```
+		formatString: #,0.0
+		displayFolder: Members
+		lineageTag: 278f6d64-c236-5fd7-8aff-e1eba5529753
+
+	measure 'Returning Members %' = ```
+			-- share of members active in the previous, equally long period who came back in the selected period
+			VAR _start = MIN ( Calendar[Date] )
+			VAR _end = MAX ( Calendar[Date] )
+			VAR _len = INT ( _end - _start ) + 1
+			VAR _prev =
+			    CALCULATETABLE (
+			        VALUES ( Transactions[MemberID] ),
+			        REMOVEFILTERS ( Calendar ),
+			        DATESBETWEEN ( Calendar[Date], _start - _len, _start - 1 ),
+			        NOT ISBLANK ( Transactions[MemberID] )
+			    )
+			VAR _curr =
+			    CALCULATETABLE ( VALUES ( Transactions[MemberID] ), NOT ISBLANK ( Transactions[MemberID] ) )
+			VAR _firstData = CALCULATE ( MIN ( Transactions[Date] ), REMOVEFILTERS () )
+			RETURN
+			    IF ( _start - _len >= _firstData, DIVIDE ( COUNTROWS ( INTERSECT ( _prev, _curr ) ), COUNTROWS ( _prev ) ) )
+			```
+		formatString: 0.0%
+		displayFolder: Members
+		lineageTag: 21628867-6eb9-52cd-ba91-ac84ed34b989
+
+	measure 'At-Risk Members' = ```
+			-- members whose last visit was 45-120 days before the end of the selected period
+			VAR _end = MAX ( Calendar[Date] )
+			VAR _lastVisit =
+			    CALCULATETABLE (
+			        ADDCOLUMNS (
+			            VALUES ( Transactions[MemberID] ),
+			            "@last", CALCULATE ( MAX ( Transactions[Date] ) )
+			        ),
+			        REMOVEFILTERS ( Calendar ),
+			        Calendar[Date] <= _end,
+			        NOT ISBLANK ( Transactions[MemberID] )
+			    )
+			RETURN
+			    COUNTROWS ( FILTER ( _lastVisit, [@last] <= _end - 45 && [@last] > _end - 120 ) ) + 0
+			```
+		formatString: #,0
+		displayFolder: Members
+		lineageTag: 9165bda1-987d-5aa7-8ba7-d601d8b6f46c
+
+	measure 'Cohort Retention %' = ```
+			VAR _offset = SELECTEDVALUE ( 'Cohort Offset'[Month Offset] )
+			VAR _cohortStart = MIN ( 'Members'[Join Month Start] )
+			VAR _lastMonth = EOMONTH ( CALCULATE ( MAX ( Transactions[Date] ), REMOVEFILTERS () ), -1 ) + 1
+			VAR _size = CALCULATE ( COUNTROWS ( 'Members' ), REMOVEFILTERS ( Calendar ) )
+			VAR _active =
+			    CALCULATE (
+			        DISTINCTCOUNTNOBLANK ( Transactions[MemberID] ),
+			        REMOVEFILTERS ( Calendar ),
+			        Transactions[Months Since Join] = _offset
+			    )
+			RETURN
+			    IF (
+			        NOT ISBLANK ( _offset )
+			            && _cohortStart >= DATE ( 2025, 1, 1 )
+			            && EDATE ( _cohortStart, _offset ) <= _lastMonth,
+			        DIVIDE ( _active, _size ) + 0
+			    )
+			```
+		formatString: 0%
+		displayFolder: Members
+		lineageTag: 28b8e234-d0ee-568d-b73a-f6b51d6a5583
+
+	measure 'Points Earned (Purchases)' = SUM ( Transactions[PointsEarned] )
+		formatString: #,0
+		displayFolder: Rewards
+		lineageTag: 5ab99305-4ea8-587c-866b-815693a896a5
+
+	measure 'Bonus Points (Campaigns)' = ```
+			CALCULATE (
+			    SUM ( 'Campaign Enrollments'[PointsAwarded] ),
+			    USERELATIONSHIP ( 'Campaign Enrollments'[CompletedDate], Calendar[Date] )
+			)
+			```
+		formatString: #,0
+		displayFolder: Rewards
+		lineageTag: b20b175c-30bd-5570-b11b-eb839ec0c3f3
+
+	measure 'Points Issued' = [Points Earned (Purchases)] + [Bonus Points (Campaigns)]
+		formatString: #,0
+		displayFolder: Rewards
+		lineageTag: ed41736d-cbb3-51a1-88d2-e1300953d319
+
+	measure 'Points Redeemed' = SUM ( Redemptions[PointsSpent] )
+		formatString: #,0
+		displayFolder: Rewards
+		lineageTag: 00b8e809-63c2-53c9-bf08-333e7279c20f
+
+	measure 'Redemption Rate %' = DIVIDE ( [Points Redeemed], [Points Issued] )
+		formatString: 0.0%
+		displayFolder: Rewards
+		lineageTag: 85214602-593a-528d-9442-449e877584f6
+
+	measure 'Rewards Redeemed' = COUNTROWS ( Redemptions )
+		formatString: #,0
+		displayFolder: Rewards
+		lineageTag: b5e6a306-fafa-528a-8ba5-79eba82d4ad2
+
+	measure 'Reward Discount' = SUM ( Redemptions[DiscountValue] )
+		formatString: €#,0
+		displayFolder: Rewards
+		lineageTag: 115924d0-1e4f-5999-991e-c64851cbfcb9
+
+	measure 'Reward COGS' = SUM ( Redemptions[RewardCost] )
+		formatString: €#,0
+		displayFolder: Rewards
+		lineageTag: 4e0a4cbf-a222-5f0a-b6f7-b250f828cac0
+
+	measure 'Reward Investment %' = DIVIDE ( [Reward Discount], [Member Sales] )
+		formatString: 0.00%
+		displayFolder: Rewards
+		lineageTag: d3889654-e79b-5cca-a1d6-060451f7ded8
+
+	measure 'Outstanding Points' = ```
+			VAR _end = MAX ( Calendar[Date] )
+			RETURN
+			    CALCULATE ( [Points Issued] - [Points Redeemed], REMOVEFILTERS ( Calendar ), Calendar[Date] <= _end )
+			```
+		formatString: #,0
+		displayFolder: Rewards
+		lineageTag: 54c3b6c1-d803-5b8a-8a3e-a36f76b658e2
+
+	measure 'Points Liability' = ```
+			VAR _pointValue = 0.005   -- 600 points = one espresso (€3.00)
+			RETURN [Outstanding Points] * _pointValue
+			```
+		formatString: €#,0
+		displayFolder: Rewards
+		lineageTag: 7ac7d3a5-66b1-541d-b328-161a7be801be
+
+	measure 'Avg Points per Redemption' = DIVIDE ( [Points Redeemed], [Rewards Redeemed] )
+		formatString: #,0
+		displayFolder: Rewards
+		lineageTag: 0daa59ec-63eb-5d5d-aa0b-cf6c3a0efd13
+
+	measure Enrollments = COUNTROWS ( 'Campaign Enrollments' )
+		formatString: #,0
+		displayFolder: Campaigns
+		lineageTag: a39b5d4f-709d-57b1-a435-8ea1210b03fe
+
+	measure Completions = CALCULATE ( COUNTROWS ( 'Campaign Enrollments' ), NOT ISBLANK ( 'Campaign Enrollments'[CompletedDate] ) )
+		formatString: #,0
+		displayFolder: Campaigns
+		lineageTag: 11b60114-a24a-5eac-8d73-b02ea0d8cce2
+
+	measure 'Completion Rate %' = DIVIDE ( [Completions], [Enrollments] )
+		formatString: 0.0%
+		displayFolder: Campaigns
+		lineageTag: e731b1f1-7cad-5333-8e3c-8488e28c40f7
+
+	measure 'Campaigns Live' = CALCULATE ( DISTINCTCOUNT ( 'Campaign Enrollments'[CampaignID] ) )
+		formatString: #,0
+		displayFolder: Campaigns
+		lineageTag: ab2c8390-b346-5543-a385-47e23501e015
+
+	measure 'Participant Spend / Member' = ```
+			VAR _campaigns =
+			    FILTER ( VALUES ( Campaigns[CampaignID] ), CALCULATE ( COUNTROWS ( 'Campaign Enrollments' ) ) > 0 )
+			VAR _rows =
+			    ADDCOLUMNS (
+			        _campaigns,
+			        "@start", CALCULATE ( MIN ( Campaigns[StartDate] ) ),
+			        "@end", CALCULATE ( MAX ( Campaigns[EndDate] ) ),
+			        "@spend",
+			            VAR _s = CALCULATE ( MIN ( Campaigns[StartDate] ) )
+			            VAR _e = CALCULATE ( MAX ( Campaigns[EndDate] ) )
+			            VAR _p = CALCULATETABLE ( VALUES ( 'Campaign Enrollments'[MemberID] ), REMOVEFILTERS ( Calendar ) )
+			            RETURN
+			                CALCULATE ( [Net Sales], TREATAS ( _p, Transactions[MemberID] ), REMOVEFILTERS ( Calendar ), DATESBETWEEN ( Calendar[Date], _s, _e ) ),
+			        "@members", CALCULATE ( DISTINCTCOUNT ( 'Campaign Enrollments'[MemberID] ), REMOVEFILTERS ( Calendar ) )
+			    )
+			RETURN
+			    DIVIDE ( SUMX ( _rows, [@spend] ), SUMX ( _rows, [@members] ) )
+			```
+		formatString: €#,0.00
+		displayFolder: Campaigns
+		lineageTag: 11862602-df1f-5030-b6f2-f5031be50bc8
+
+	measure 'Non-participant Spend / Member' = ```
+			VAR _campaigns =
+			    FILTER ( VALUES ( Campaigns[CampaignID] ), CALCULATE ( COUNTROWS ( 'Campaign Enrollments' ) ) > 0 )
+			VAR _rows =
+			    ADDCOLUMNS (
+			        _campaigns,
+			        "@start", CALCULATE ( MIN ( Campaigns[StartDate] ) ),
+			        "@end", CALCULATE ( MAX ( Campaigns[EndDate] ) ),
+			        "@spend",
+			            VAR _s = CALCULATE ( MIN ( Campaigns[StartDate] ) )
+			            VAR _e = CALCULATE ( MAX ( Campaigns[EndDate] ) )
+			            VAR _p = CALCULATETABLE ( VALUES ( 'Campaign Enrollments'[MemberID] ), REMOVEFILTERS ( Calendar ) )
+			            VAR _active =
+			                CALCULATETABLE (
+			                    VALUES ( Transactions[MemberID] ),
+			                    REMOVEFILTERS ( Calendar ),
+			                    DATESBETWEEN ( Calendar[Date], _s, _e ),
+			                    NOT ISBLANK ( Transactions[MemberID] )
+			                )
+			            VAR _non = EXCEPT ( _active, _p )
+			            RETURN
+			                CALCULATE ( [Net Sales], TREATAS ( _non, Transactions[MemberID] ), REMOVEFILTERS ( Calendar ), DATESBETWEEN ( Calendar[Date], _s, _e ) ),
+			        "@members",
+			            VAR _s = CALCULATE ( MIN ( Campaigns[StartDate] ) )
+			            VAR _e = CALCULATE ( MAX ( Campaigns[EndDate] ) )
+			            VAR _p = CALCULATETABLE ( VALUES ( 'Campaign Enrollments'[MemberID] ), REMOVEFILTERS ( Calendar ) )
+			            VAR _active =
+			                CALCULATETABLE (
+			                    VALUES ( Transactions[MemberID] ),
+			                    REMOVEFILTERS ( Calendar ),
+			                    DATESBETWEEN ( Calendar[Date], _s, _e ),
+			                    NOT ISBLANK ( Transactions[MemberID] )
+			                )
+			            RETURN COUNTROWS ( EXCEPT ( _active, _p ) )
+			    )
+			RETURN
+			    DIVIDE ( SUMX ( _rows, [@spend] ), SUMX ( _rows, [@members] ) )
+			```
+		formatString: €#,0.00
+		displayFolder: Campaigns
+		lineageTag: 8fcc673b-1288-5a4d-a233-3818bd1c9f82
+
+	measure 'Spend Uplift %' = ```
+			VAR _p = [Participant Spend / Member]
+			VAR _n = [Non-participant Spend / Member]
+			RETURN IF ( NOT ISBLANK ( _p ) && NOT ISBLANK ( _n ), DIVIDE ( _p, _n ) - 1 )
+			```
+		formatString: +0.0%;-0.0%;0.0%
+		displayFolder: Campaigns
+		lineageTag: dbc5684f-e279-55c1-87a8-8719c818d060
+
+	measure 'Net Sales PY' = CALCULATE ( [Net Sales], SAMEPERIODLASTYEAR ( Calendar[Date] ) )
+		formatString: €#,0
+		displayFolder: KPI Cards\Comparisons
+		lineageTag: 8a869547-ca98-5efb-85d8-4fc02fdadd3f
+
+	measure 'Net Sales Δ' = IF ( NOT ISBLANK ( [Net Sales PY] ), DIVIDE ( [Net Sales] - [Net Sales PY], [Net Sales PY] ) )
+		formatString: ▲ 0.0%;▼ 0.0%;0.0%
+		displayFolder: KPI Cards\Comparisons
+		lineageTag: 0a3e97fd-d2e5-5fce-bbca-85ecb4f8070a
+
+	measure 'Net Sales Δ Label' = ```
+			VAR _d = DIVIDE ( [Net Sales] - [Net Sales PY], [Net Sales PY] )
+			RETURN
+			    IF ( ISBLANK ( [Net Sales PY] ) || ISBLANK ( [Net Sales] ), "no prior-year data",
+			        IF ( _d >= 0, "▲ ", "▼ " ) & FORMAT ( ABS ( _d ), "0.0%" ) & "  vs PY" )
+			```
+		displayFolder: KPI Cards\Labels
+		lineageTag: cd71153a-26cd-58ca-8189-74e489fdffbc
+
+	measure 'Net Sales Δ Colour' = ```
+			VAR _d = [Net Sales Δ]
+			RETURN IF ( ISBLANK ( _d ), "#B8A99A", IF ( _d >= 0, "#7FD8B4", "#F2919B" ) )
+			```
+		displayFolder: KPI Cards\Colours
+		lineageTag: 52bcb0c3-8728-52ed-a496-b2fb5424a796
+
+	measure 'Transactions PY' = CALCULATE ( [Transactions], SAMEPERIODLASTYEAR ( Calendar[Date] ) )
+		formatString: #,0
+		displayFolder: KPI Cards\Comparisons
+		lineageTag: 72ed09d7-f368-5e45-8b84-c1e220f3ea01
+
+	measure 'Transactions Δ' = IF ( NOT ISBLANK ( [Transactions PY] ), DIVIDE ( [Transactions] - [Transactions PY], [Transactions PY] ) )
+		formatString: ▲ 0.0%;▼ 0.0%;0.0%
+		displayFolder: KPI Cards\Comparisons
+		lineageTag: 519b0c66-51e1-5dca-bf42-0755cca740ad
+
+	measure 'Transactions Δ Label' = ```
+			VAR _d = DIVIDE ( [Transactions] - [Transactions PY], [Transactions PY] )
+			RETURN
+			    IF ( ISBLANK ( [Transactions PY] ) || ISBLANK ( [Transactions] ), "no prior-year data",
+			        IF ( _d >= 0, "▲ ", "▼ " ) & FORMAT ( ABS ( _d ), "0.0%" ) & "  vs PY" )
+			```
+		displayFolder: KPI Cards\Labels
+		lineageTag: 041712fa-5e4c-5a67-90da-03fc7f870ef2
+
+	measure 'Transactions Δ Colour' = ```
+			VAR _d = [Transactions Δ]
+			RETURN IF ( ISBLANK ( _d ), "#B8A99A", IF ( _d >= 0, "#7FD8B4", "#F2919B" ) )
+			```
+		displayFolder: KPI Cards\Colours
+		lineageTag: 55ac279c-6979-587e-bd42-d72baf862585
+
+	measure 'Avg Ticket PY' = CALCULATE ( [Avg Ticket], SAMEPERIODLASTYEAR ( Calendar[Date] ) )
+		formatString: €#,0.00
+		displayFolder: KPI Cards\Comparisons
+		lineageTag: e9d43611-ebfc-5a6c-af09-5ce89e830460
+
+	measure 'Avg Ticket Δ' = IF ( NOT ISBLANK ( [Avg Ticket PY] ), DIVIDE ( [Avg Ticket] - [Avg Ticket PY], [Avg Ticket PY] ) )
+		formatString: ▲ 0.0%;▼ 0.0%;0.0%
+		displayFolder: KPI Cards\Comparisons
+		lineageTag: 1b0ba3d7-1461-591c-b920-1fa3cd1de42f
+
+	measure 'Avg Ticket Δ Label' = ```
+			VAR _d = DIVIDE ( [Avg Ticket] - [Avg Ticket PY], [Avg Ticket PY] )
+			RETURN
+			    IF ( ISBLANK ( [Avg Ticket PY] ) || ISBLANK ( [Avg Ticket] ), "no prior-year data",
+			        IF ( _d >= 0, "▲ ", "▼ " ) & FORMAT ( ABS ( _d ), "0.0%" ) & "  vs PY" )
+			```
+		displayFolder: KPI Cards\Labels
+		lineageTag: b3038258-dfba-5943-9331-fcc02b47f9b6
+
+	measure 'Avg Ticket Δ Colour' = ```
+			VAR _d = [Avg Ticket Δ]
+			RETURN IF ( ISBLANK ( _d ), "#B8A99A", IF ( _d >= 0, "#7FD8B4", "#F2919B" ) )
+			```
+		displayFolder: KPI Cards\Colours
+		lineageTag: 51a928ab-abd0-5a4f-9bca-a5d79da01d0e
+
+	measure 'Member Sales Share % PY' = CALCULATE ( [Member Sales Share %], SAMEPERIODLASTYEAR ( Calendar[Date] ) )
+		formatString: 0.0%
+		displayFolder: KPI Cards\Comparisons
+		lineageTag: 0a817a3c-d2c6-55be-8c3a-8d15126d8302
+
+	measure 'Member Sales Share % Δ' = IF ( NOT ISBLANK ( [Member Sales Share % PY] ), [Member Sales Share %] - [Member Sales Share % PY] )
+		formatString: +0.0%;-0.0%
+		displayFolder: KPI Cards\Comparisons
+		lineageTag: 4e4ba30c-a0d1-5e87-ba60-c23689d49ecc
+
+	measure 'Member Sales Share % Δ Label' = ```
+			VAR _d = [Member Sales Share %] - [Member Sales Share % PY]
+			RETURN
+			    IF ( ISBLANK ( [Member Sales Share % PY] ) || ISBLANK ( [Member Sales Share %] ), "no prior-year data",
+			        IF ( _d >= 0, "▲ ", "▼ " ) & FORMAT ( ABS ( _d ) * 100, "0.0" ) & " pp  vs PY" )
+			```
+		displayFolder: KPI Cards\Labels
+		lineageTag: 826e7b84-3037-5c5d-9cee-15ef9c573c99
+
+	measure 'Member Sales Share % Δ Colour' = ```
+			VAR _d = [Member Sales Share % Δ]
+			RETURN IF ( ISBLANK ( _d ), "#B8A99A", IF ( _d >= 0, "#7FD8B4", "#F2919B" ) )
+			```
+		displayFolder: KPI Cards\Colours
+		lineageTag: 508d6981-0901-5458-9c75-e4e289757afc
+
+	measure 'Active Members PY' = CALCULATE ( [Active Members], SAMEPERIODLASTYEAR ( Calendar[Date] ) )
+		formatString: #,0
+		displayFolder: KPI Cards\Comparisons
+		lineageTag: bd1c84ae-09c8-5173-9b3f-3a9bdb902e55
+
+	measure 'Active Members Δ' = IF ( NOT ISBLANK ( [Active Members PY] ), DIVIDE ( [Active Members] - [Active Members PY], [Active Members PY] ) )
+		formatString: ▲ 0.0%;▼ 0.0%;0.0%
+		displayFolder: KPI Cards\Comparisons
+		lineageTag: 000b1139-8d56-55a4-9aaa-48800fb66569
+
+	measure 'Active Members Δ Label' = ```
+			VAR _d = DIVIDE ( [Active Members] - [Active Members PY], [Active Members PY] )
+			RETURN
+			    IF ( ISBLANK ( [Active Members PY] ) || ISBLANK ( [Active Members] ), "no prior-year data",
+			        IF ( _d >= 0, "▲ ", "▼ " ) & FORMAT ( ABS ( _d ), "0.0%" ) & "  vs PY" )
+			```
+		displayFolder: KPI Cards\Labels
+		lineageTag: 154078f5-b9fd-542b-877c-ed371e476e4f
+
+	measure 'Active Members Δ Colour' = ```
+			VAR _d = [Active Members Δ]
+			RETURN IF ( ISBLANK ( _d ), "#B8A99A", IF ( _d >= 0, "#7FD8B4", "#F2919B" ) )
+			```
+		displayFolder: KPI Cards\Colours
+		lineageTag: 5c6af240-bcf1-59a6-93d7-d741b3cbed58
+
+	measure 'New Members PY' = CALCULATE ( [New Members], SAMEPERIODLASTYEAR ( Calendar[Date] ) )
+		formatString: #,0
+		displayFolder: KPI Cards\Comparisons
+		lineageTag: b1698c59-eae9-50e6-a85b-e7340a4a5e4c
+
+	measure 'New Members Δ' = IF ( NOT ISBLANK ( [New Members PY] ), DIVIDE ( [New Members] - [New Members PY], [New Members PY] ) )
+		formatString: ▲ 0.0%;▼ 0.0%;0.0%
+		displayFolder: KPI Cards\Comparisons
+		lineageTag: fe6c1e51-b26c-55e0-8f81-9e941ed69fd7
+
+	measure 'New Members Δ Label' = ```
+			VAR _d = DIVIDE ( [New Members] - [New Members PY], [New Members PY] )
+			RETURN
+			    IF ( ISBLANK ( [New Members PY] ) || ISBLANK ( [New Members] ), "no prior-year data",
+			        IF ( _d >= 0, "▲ ", "▼ " ) & FORMAT ( ABS ( _d ), "0.0%" ) & "  vs PY" )
+			```
+		displayFolder: KPI Cards\Labels
+		lineageTag: 8f7336ac-cfdc-56ee-a4b4-3302e8ce2089
+
+	measure 'New Members Δ Colour' = ```
+			VAR _d = [New Members Δ]
+			RETURN IF ( ISBLANK ( _d ), "#B8A99A", IF ( _d >= 0, "#7FD8B4", "#F2919B" ) )
+			```
+		displayFolder: KPI Cards\Colours
+		lineageTag: c99df811-bcd7-5c0b-8f8c-575bc6a63aab
+
+	measure 'Visits per Member PY' = CALCULATE ( [Visits per Member], SAMEPERIODLASTYEAR ( Calendar[Date] ) )
+		formatString: #,0.0
+		displayFolder: KPI Cards\Comparisons
+		lineageTag: e769fe75-69d9-5dda-ae36-117b8c2448d7
+
+	measure 'Visits per Member Δ' = IF ( NOT ISBLANK ( [Visits per Member PY] ), DIVIDE ( [Visits per Member] - [Visits per Member PY], [Visits per Member PY] ) )
+		formatString: ▲ 0.0%;▼ 0.0%;0.0%
+		displayFolder: KPI Cards\Comparisons
+		lineageTag: 9f8cc1ca-0f0e-578a-a46f-7f79cb4ef20f
+
+	measure 'Visits per Member Δ Label' = ```
+			VAR _d = DIVIDE ( [Visits per Member] - [Visits per Member PY], [Visits per Member PY] )
+			RETURN
+			    IF ( ISBLANK ( [Visits per Member PY] ) || ISBLANK ( [Visits per Member] ), "no prior-year data",
+			        IF ( _d >= 0, "▲ ", "▼ " ) & FORMAT ( ABS ( _d ), "0.0%" ) & "  vs PY" )
+			```
+		displayFolder: KPI Cards\Labels
+		lineageTag: 3cc6dd0a-b1ce-510a-8369-c66c0ac6222c
+
+	measure 'Visits per Member Δ Colour' = ```
+			VAR _d = [Visits per Member Δ]
+			RETURN IF ( ISBLANK ( _d ), "#B8A99A", IF ( _d >= 0, "#7FD8B4", "#F2919B" ) )
+			```
+		displayFolder: KPI Cards\Colours
+		lineageTag: 4438c976-166d-5047-80da-d6224b8ad033
+
+	measure 'Returning Members % PY' = CALCULATE ( [Returning Members %], SAMEPERIODLASTYEAR ( Calendar[Date] ) )
+		formatString: 0.0%
+		displayFolder: KPI Cards\Comparisons
+		lineageTag: b8030a9d-0e8f-5985-afcc-ae77a5ecb909
+
+	measure 'Returning Members % Δ' = IF ( NOT ISBLANK ( [Returning Members % PY] ), [Returning Members %] - [Returning Members % PY] )
+		formatString: +0.0%;-0.0%
+		displayFolder: KPI Cards\Comparisons
+		lineageTag: 4a3ea928-07ce-5a52-95c6-6b30ab94d71a
+
+	measure 'Returning Members % Δ Label' = ```
+			VAR _d = [Returning Members %] - [Returning Members % PY]
+			RETURN
+			    IF ( ISBLANK ( [Returning Members % PY] ) || ISBLANK ( [Returning Members %] ), "no prior-year data",
+			        IF ( _d >= 0, "▲ ", "▼ " ) & FORMAT ( ABS ( _d ) * 100, "0.0" ) & " pp  vs PY" )
+			```
+		displayFolder: KPI Cards\Labels
+		lineageTag: 48ef333f-0c16-5026-8635-a3dd3a646d9f
+
+	measure 'Returning Members % Δ Colour' = ```
+			VAR _d = [Returning Members % Δ]
+			RETURN IF ( ISBLANK ( _d ), "#B8A99A", IF ( _d >= 0, "#7FD8B4", "#F2919B" ) )
+			```
+		displayFolder: KPI Cards\Colours
+		lineageTag: d478af3f-972c-565e-8240-1d9a6c80ab61
+
+	measure 'At-Risk Members PY' = CALCULATE ( [At-Risk Members], SAMEPERIODLASTYEAR ( Calendar[Date] ) )
+		formatString: #,0
+		displayFolder: KPI Cards\Comparisons
+		lineageTag: 082f255c-930a-5b87-b5d6-e8f45bb34c4a
+
+	measure 'At-Risk Members Δ' = IF ( NOT ISBLANK ( [At-Risk Members PY] ), DIVIDE ( [At-Risk Members] - [At-Risk Members PY], [At-Risk Members PY] ) )
+		formatString: ▲ 0.0%;▼ 0.0%;0.0%
+		displayFolder: KPI Cards\Comparisons
+		lineageTag: d267bbcb-9073-533c-bcaf-f86664fd53f6
+
+	measure 'At-Risk Members Δ Label' = ```
+			VAR _d = DIVIDE ( [At-Risk Members] - [At-Risk Members PY], [At-Risk Members PY] )
+			RETURN
+			    IF ( ISBLANK ( [At-Risk Members PY] ) || ISBLANK ( [At-Risk Members] ), "no prior-year data",
+			        IF ( _d >= 0, "▲ ", "▼ " ) & FORMAT ( ABS ( _d ), "0.0%" ) & "  vs PY" )
+			```
+		displayFolder: KPI Cards\Labels
+		lineageTag: fcc7613a-47d6-5037-9cae-0b9b3ba20231
+
+	measure 'At-Risk Members Δ Colour' = ```
+			VAR _d = [At-Risk Members Δ]
+			RETURN IF ( ISBLANK ( _d ), "#B8A99A", IF ( _d <= 0, "#7FD8B4", "#F2919B" ) )
+			```
+		displayFolder: KPI Cards\Colours
+		lineageTag: f344dbaa-1ba1-59f3-8e5b-4151787ae969
+
+	measure 'Food Attach Rate % PY' = CALCULATE ( [Food Attach Rate %], SAMEPERIODLASTYEAR ( Calendar[Date] ) )
+		formatString: 0.0%
+		displayFolder: KPI Cards\Comparisons
+		lineageTag: ed3b4914-0681-5a2c-8ec3-c2f776b1b9bd
+
+	measure 'Food Attach Rate % Δ' = IF ( NOT ISBLANK ( [Food Attach Rate % PY] ), [Food Attach Rate %] - [Food Attach Rate % PY] )
+		formatString: +0.0%;-0.0%
+		displayFolder: KPI Cards\Comparisons
+		lineageTag: 19ef8bd3-e9d0-5e32-9eeb-61010ccf2324
+
+	measure 'Food Attach Rate % Δ Label' = ```
+			VAR _d = [Food Attach Rate %] - [Food Attach Rate % PY]
+			RETURN
+			    IF ( ISBLANK ( [Food Attach Rate % PY] ) || ISBLANK ( [Food Attach Rate %] ), "no prior-year data",
+			        IF ( _d >= 0, "▲ ", "▼ " ) & FORMAT ( ABS ( _d ) * 100, "0.0" ) & " pp  vs PY" )
+			```
+		displayFolder: KPI Cards\Labels
+		lineageTag: bfba79dd-435c-57dd-8e60-6f8bfc272d04
+
+	measure 'Food Attach Rate % Δ Colour' = ```
+			VAR _d = [Food Attach Rate % Δ]
+			RETURN IF ( ISBLANK ( _d ), "#B8A99A", IF ( _d >= 0, "#7FD8B4", "#F2919B" ) )
+			```
+		displayFolder: KPI Cards\Colours
+		lineageTag: ad980755-6da0-5e0a-93e3-db4be670a8a2
+
+	measure 'Points Issued PY' = CALCULATE ( [Points Issued], SAMEPERIODLASTYEAR ( Calendar[Date] ) )
+		formatString: #,0
+		displayFolder: KPI Cards\Comparisons
+		lineageTag: b7b67652-dab1-5e19-a903-bac4f6de8806
+
+	measure 'Points Issued Δ' = IF ( NOT ISBLANK ( [Points Issued PY] ), DIVIDE ( [Points Issued] - [Points Issued PY], [Points Issued PY] ) )
+		formatString: ▲ 0.0%;▼ 0.0%;0.0%
+		displayFolder: KPI Cards\Comparisons
+		lineageTag: df37df3c-ca3e-57bc-9681-14ca5a2fcc2f
+
+	measure 'Points Issued Δ Label' = ```
+			VAR _d = DIVIDE ( [Points Issued] - [Points Issued PY], [Points Issued PY] )
+			RETURN
+			    IF ( ISBLANK ( [Points Issued PY] ) || ISBLANK ( [Points Issued] ), "no prior-year data",
+			        IF ( _d >= 0, "▲ ", "▼ " ) & FORMAT ( ABS ( _d ), "0.0%" ) & "  vs PY" )
+			```
+		displayFolder: KPI Cards\Labels
+		lineageTag: 7ba1a472-41db-568a-872b-333d33cba5fb
+
+	measure 'Points Issued Δ Colour' = ```
+			VAR _d = [Points Issued Δ]
+			RETURN IF ( ISBLANK ( _d ), "#B8A99A", IF ( _d >= 0, "#7FD8B4", "#F2919B" ) )
+			```
+		displayFolder: KPI Cards\Colours
+		lineageTag: ac940b46-a630-5ba2-b632-c2be19103852
+
+	measure 'Points Redeemed PY' = CALCULATE ( [Points Redeemed], SAMEPERIODLASTYEAR ( Calendar[Date] ) )
+		formatString: #,0
+		displayFolder: KPI Cards\Comparisons
+		lineageTag: e29ab459-a738-5342-b313-c7cfa44c6146
+
+	measure 'Points Redeemed Δ' = IF ( NOT ISBLANK ( [Points Redeemed PY] ), DIVIDE ( [Points Redeemed] - [Points Redeemed PY], [Points Redeemed PY] ) )
+		formatString: ▲ 0.0%;▼ 0.0%;0.0%
+		displayFolder: KPI Cards\Comparisons
+		lineageTag: 491b8add-8caa-52de-bb32-d0146fdbec53
+
+	measure 'Points Redeemed Δ Label' = ```
+			VAR _d = DIVIDE ( [Points Redeemed] - [Points Redeemed PY], [Points Redeemed PY] )
+			RETURN
+			    IF ( ISBLANK ( [Points Redeemed PY] ) || ISBLANK ( [Points Redeemed] ), "no prior-year data",
+			        IF ( _d >= 0, "▲ ", "▼ " ) & FORMAT ( ABS ( _d ), "0.0%" ) & "  vs PY" )
+			```
+		displayFolder: KPI Cards\Labels
+		lineageTag: 20b0031b-a9ae-5a93-b6cc-c3f76af7427e
+
+	measure 'Points Redeemed Δ Colour' = ```
+			VAR _d = [Points Redeemed Δ]
+			RETURN IF ( ISBLANK ( _d ), "#B8A99A", IF ( _d >= 0, "#7FD8B4", "#F2919B" ) )
+			```
+		displayFolder: KPI Cards\Colours
+		lineageTag: 91aa02be-0f1b-59a2-92fc-4fd82bde82e7
+
+	measure 'Redemption Rate % PY' = CALCULATE ( [Redemption Rate %], SAMEPERIODLASTYEAR ( Calendar[Date] ) )
+		formatString: 0.0%
+		displayFolder: KPI Cards\Comparisons
+		lineageTag: eafe1b25-02ef-50e8-b2bb-d13f22d329a5
+
+	measure 'Redemption Rate % Δ' = IF ( NOT ISBLANK ( [Redemption Rate % PY] ), [Redemption Rate %] - [Redemption Rate % PY] )
+		formatString: +0.0%;-0.0%
+		displayFolder: KPI Cards\Comparisons
+		lineageTag: 1d242fcc-fba3-57af-b00d-6a35b3148a1b
+
+	measure 'Redemption Rate % Δ Label' = ```
+			VAR _d = [Redemption Rate %] - [Redemption Rate % PY]
+			RETURN
+			    IF ( ISBLANK ( [Redemption Rate % PY] ) || ISBLANK ( [Redemption Rate %] ), "no prior-year data",
+			        IF ( _d >= 0, "▲ ", "▼ " ) & FORMAT ( ABS ( _d ) * 100, "0.0" ) & " pp  vs PY" )
+			```
+		displayFolder: KPI Cards\Labels
+		lineageTag: e70319ef-7020-5ce1-bc69-b75b4f07efd8
+
+	measure 'Redemption Rate % Δ Colour' = ```
+			VAR _d = [Redemption Rate % Δ]
+			RETURN IF ( ISBLANK ( _d ), "#B8A99A", IF ( _d >= 0, "#7FD8B4", "#F2919B" ) )
+			```
+		displayFolder: KPI Cards\Colours
+		lineageTag: 8b435a36-9b7f-5694-a570-ec4dc9578b35
+
+	measure 'Points Liability PY' = CALCULATE ( [Points Liability], SAMEPERIODLASTYEAR ( Calendar[Date] ) )
+		formatString: €#,0
+		displayFolder: KPI Cards\Comparisons
+		lineageTag: 4690ed84-29b4-5180-8440-271d04a8b8bb
+
+	measure 'Points Liability Δ' = IF ( NOT ISBLANK ( [Points Liability PY] ), DIVIDE ( [Points Liability] - [Points Liability PY], [Points Liability PY] ) )
+		formatString: ▲ 0.0%;▼ 0.0%;0.0%
+		displayFolder: KPI Cards\Comparisons
+		lineageTag: 7b40c089-30e0-5871-8dda-3306ce216ff8
+
+	measure 'Points Liability Δ Label' = ```
+			VAR _d = DIVIDE ( [Points Liability] - [Points Liability PY], [Points Liability PY] )
+			RETURN
+			    IF ( ISBLANK ( [Points Liability PY] ) || ISBLANK ( [Points Liability] ), "no prior-year data",
+			        IF ( _d >= 0, "▲ ", "▼ " ) & FORMAT ( ABS ( _d ), "0.0%" ) & "  vs PY" )
+			```
+		displayFolder: KPI Cards\Labels
+		lineageTag: 3238a96f-e9ef-5718-805d-6550b97824d6
+
+	measure 'Points Liability Δ Colour' = ```
+			VAR _d = [Points Liability Δ]
+			RETURN IF ( ISBLANK ( _d ), "#B8A99A", IF ( _d <= 0, "#7FD8B4", "#F2919B" ) )
+			```
+		displayFolder: KPI Cards\Colours
+		lineageTag: 98add1fe-0ea1-542d-a463-adc6888656df
+
+	measure 'Reward Investment % PY' = CALCULATE ( [Reward Investment %], SAMEPERIODLASTYEAR ( Calendar[Date] ) )
+		formatString: 0.00%
+		displayFolder: KPI Cards\Comparisons
+		lineageTag: 20b1f5d4-0260-5c6f-ad0d-4e500f2b2618
+
+	measure 'Reward Investment % Δ' = IF ( NOT ISBLANK ( [Reward Investment % PY] ), [Reward Investment %] - [Reward Investment % PY] )
+		formatString: +0.0%;-0.0%
+		displayFolder: KPI Cards\Comparisons
+		lineageTag: 4fc86067-b379-5881-b2af-aeb79a5704a9
+
+	measure 'Reward Investment % Δ Label' = ```
+			VAR _d = [Reward Investment %] - [Reward Investment % PY]
+			RETURN
+			    IF ( ISBLANK ( [Reward Investment % PY] ) || ISBLANK ( [Reward Investment %] ), "no prior-year data",
+			        IF ( _d >= 0, "▲ ", "▼ " ) & FORMAT ( ABS ( _d ) * 100, "0.0" ) & " pp  vs PY" )
+			```
+		displayFolder: KPI Cards\Labels
+		lineageTag: 1fde947a-3505-5986-9c4e-a63e0ff17ae8
+
+	measure 'Reward Investment % Δ Colour' = ```
+			VAR _d = [Reward Investment % Δ]
+			RETURN IF ( ISBLANK ( _d ), "#B8A99A", IF ( _d <= 0, "#7FD8B4", "#F2919B" ) )
+			```
+		displayFolder: KPI Cards\Colours
+		lineageTag: b05cb047-1510-5a79-a899-470edc170b74
+
+	measure 'Enrollments PY' = CALCULATE ( [Enrollments], SAMEPERIODLASTYEAR ( Calendar[Date] ) )
+		formatString: #,0
+		displayFolder: KPI Cards\Comparisons
+		lineageTag: f3124fb9-ad64-5c26-8cb4-8de5cd10ab6f
+
+	measure 'Enrollments Δ' = IF ( NOT ISBLANK ( [Enrollments PY] ), DIVIDE ( [Enrollments] - [Enrollments PY], [Enrollments PY] ) )
+		formatString: ▲ 0.0%;▼ 0.0%;0.0%
+		displayFolder: KPI Cards\Comparisons
+		lineageTag: b116cf3b-7900-5fc3-afb3-ef412bc6bda0
+
+	measure 'Enrollments Δ Label' = ```
+			VAR _d = DIVIDE ( [Enrollments] - [Enrollments PY], [Enrollments PY] )
+			RETURN
+			    IF ( ISBLANK ( [Enrollments PY] ) || ISBLANK ( [Enrollments] ), "no prior-year data",
+			        IF ( _d >= 0, "▲ ", "▼ " ) & FORMAT ( ABS ( _d ), "0.0%" ) & "  vs PY" )
+			```
+		displayFolder: KPI Cards\Labels
+		lineageTag: 7e404110-b1d8-5a90-acb7-257ae46c247c
+
+	measure 'Enrollments Δ Colour' = ```
+			VAR _d = [Enrollments Δ]
+			RETURN IF ( ISBLANK ( _d ), "#B8A99A", IF ( _d >= 0, "#7FD8B4", "#F2919B" ) )
+			```
+		displayFolder: KPI Cards\Colours
+		lineageTag: 9173cddc-d675-5ad8-852f-e1ff7e83ca86
+
+	measure 'Completions PY' = CALCULATE ( [Completions], SAMEPERIODLASTYEAR ( Calendar[Date] ) )
+		formatString: #,0
+		displayFolder: KPI Cards\Comparisons
+		lineageTag: c7442202-194a-59c2-9d9c-e7ea72c36324
+
+	measure 'Completions Δ' = IF ( NOT ISBLANK ( [Completions PY] ), DIVIDE ( [Completions] - [Completions PY], [Completions PY] ) )
+		formatString: ▲ 0.0%;▼ 0.0%;0.0%
+		displayFolder: KPI Cards\Comparisons
+		lineageTag: 0d857905-4666-5d4b-9e20-254e6dd3acdf
+
+	measure 'Completions Δ Label' = ```
+			VAR _d = DIVIDE ( [Completions] - [Completions PY], [Completions PY] )
+			RETURN
+			    IF ( ISBLANK ( [Completions PY] ) || ISBLANK ( [Completions] ), "no prior-year data",
+			        IF ( _d >= 0, "▲ ", "▼ " ) & FORMAT ( ABS ( _d ), "0.0%" ) & "  vs PY" )
+			```
+		displayFolder: KPI Cards\Labels
+		lineageTag: fb92a2e1-ae83-5ec5-841f-466a6649e765
+
+	measure 'Completions Δ Colour' = ```
+			VAR _d = [Completions Δ]
+			RETURN IF ( ISBLANK ( _d ), "#B8A99A", IF ( _d >= 0, "#7FD8B4", "#F2919B" ) )
+			```
+		displayFolder: KPI Cards\Colours
+		lineageTag: ef8b84be-a909-59a5-a78c-8001be2cfa3e
+
+	measure 'Completion Rate % PY' = CALCULATE ( [Completion Rate %], SAMEPERIODLASTYEAR ( Calendar[Date] ) )
+		formatString: 0.0%
+		displayFolder: KPI Cards\Comparisons
+		lineageTag: 20bcda1e-863b-5221-bf07-a1b4dc840959
+
+	measure 'Completion Rate % Δ' = IF ( NOT ISBLANK ( [Completion Rate % PY] ), [Completion Rate %] - [Completion Rate % PY] )
+		formatString: +0.0%;-0.0%
+		displayFolder: KPI Cards\Comparisons
+		lineageTag: c19cfc06-6f06-538c-b05a-f2e815349b6c
+
+	measure 'Completion Rate % Δ Label' = ```
+			VAR _d = [Completion Rate %] - [Completion Rate % PY]
+			RETURN
+			    IF ( ISBLANK ( [Completion Rate % PY] ) || ISBLANK ( [Completion Rate %] ), "no prior-year data",
+			        IF ( _d >= 0, "▲ ", "▼ " ) & FORMAT ( ABS ( _d ) * 100, "0.0" ) & " pp  vs PY" )
+			```
+		displayFolder: KPI Cards\Labels
+		lineageTag: 568014c2-f296-5ef4-95d2-cbdd613879f6
+
+	measure 'Completion Rate % Δ Colour' = ```
+			VAR _d = [Completion Rate % Δ]
+			RETURN IF ( ISBLANK ( _d ), "#B8A99A", IF ( _d >= 0, "#7FD8B4", "#F2919B" ) )
+			```
+		displayFolder: KPI Cards\Colours
+		lineageTag: 0fe4ef50-f3ce-5ed6-ba69-fc00d8d6779c
+
+	measure 'Period Label' = ```
+			VAR _s = CALCULATE ( MIN ( Transactions[Date] ) )
+			VAR _e = CALCULATE ( MAX ( Transactions[Date] ) )
+			RETURN FORMAT ( _s, "d mmm yyyy" ) & "  –  " & FORMAT ( _e, "d mmm yyyy" )
+			```
+		displayFolder: UX
+		lineageTag: d4870620-f514-5af9-8267-c88b7d3221cc
+
+	measure 'Scope Label' = ```
+			VAR _r = IF ( ISFILTERED ( Stores[Region] ), CONCATENATEX ( VALUES ( Stores[Region] ), Stores[Region], ", " ), "All regions" )
+			VAR _f = IF ( ISFILTERED ( Stores[Format] ), CONCATENATEX ( VALUES ( Stores[Format] ), Stores[Format], ", " ), "all formats" )
+			RETURN _r & "  ·  " & _f & "  ·  " & FORMAT ( DISTINCTCOUNT ( Transactions[StoreID] ), "0" ) & " stores"
+			```
+		displayFolder: UX
+		lineageTag: d68d0523-27f2-586c-8bdf-74007615aa5e
+
+	measure 'YoY Font Colour' = ```
+			VAR _d = [Net Sales Δ]
+			RETURN IF ( ISBLANK ( _d ), "#B8A99A", IF ( _d >= 0, "#7FD8B4", "#F2919B" ) )
+			```
+		displayFolder: UX
+		lineageTag: 91d8fb23-9f8d-5587-9b5e-760669056165
+
+	measure 'Uplift Font Colour' = ```
+			VAR _d = [Spend Uplift %]
+			RETURN IF ( ISBLANK ( _d ), "#B8A99A", IF ( _d >= 0, "#7FD8B4", "#F2919B" ) )
+			```
+		displayFolder: UX
+		lineageTag: 63bb9b74-b3c1-5ce6-b364-22f2672834e7
+
+	measure 'Compact Net Sales' = VAR _v = [Net Sales] RETURN IF ( _v >= 1000000, FORMAT ( _v / 1000000, "€0.00" ) & "M", IF ( _v >= 1000, FORMAT ( _v / 1000, "€0.0" ) & "K", FORMAT ( _v, "€0" ) ) )
+		displayFolder: UX
+		lineageTag: 6fb49213-deb4-5c15-84ab-d0f6847fe7cd
+
+	measure 'Compact Points Liability' = VAR _v = [Points Liability] RETURN IF ( _v >= 1000000, FORMAT ( _v / 1000000, "€0.00" ) & "M", IF ( _v >= 1000, FORMAT ( _v / 1000, "€0.0" ) & "K", FORMAT ( _v, "€0" ) ) )
+		displayFolder: UX
+		lineageTag: 04eb2b7a-845c-5360-a303-44d0f1d88504
+
+	measure 'Headline Overview' = ```
+			VAR _d = [Net Sales Δ]
+			RETURN
+			    [Compact Net Sales] & " net sales"
+			        & IF ( NOT ISBLANK ( _d ), " (" & IF ( _d >= 0, "+", "−" ) & FORMAT ( ABS ( _d ), "0%" ) & " vs PY)" )
+			        & "  ·  members drive " & FORMAT ( [Member Sales Share %], "0%" ) & " of revenue"
+			        & "  ·  members spend " & FORMAT ( [Member Ticket Uplift %], "0%" ) & " more per visit than guests"
+			```
+		displayFolder: UX
+		lineageTag: e0969392-5755-56c0-a491-9e3b4bd1acfa
+
+	measure 'Headline Members' = ```
+			FORMAT ( [Active Members], "#,0" ) & " active members  ·  " & FORMAT ( [New Members], "#,0" ) & " joined in the period"
+			    & IF ( NOT ISBLANK ( [Returning Members %] ), "  ·  " & FORMAT ( [Returning Members %], "0%" ) & " of last period's members came back" )
+			```
+		displayFolder: UX
+		lineageTag: 430d7c53-0860-5ba2-99f8-955f304bf74d
+
+	measure 'Headline Rewards' = ```
+			FORMAT ( [Points Issued], "#,0" ) & " points issued  ·  " & FORMAT ( [Redemption Rate %], "0%" ) & " redeemed"
+			    & "  ·  open liability " & [Compact Points Liability]
+			```
+		displayFolder: UX
+		lineageTag: 943cccbe-ae08-51a9-9cc5-1b8fb644fbe5
+
+	measure 'Headline Campaigns' = ```
+			FORMAT ( [Enrollments], "#,0" ) & " enrollments across " & FORMAT ( [Campaigns Live], "0" ) & " campaigns  ·  "
+			    & FORMAT ( [Completion Rate %], "0%" ) & " completed"
+			    & IF ( NOT ISBLANK ( [Spend Uplift %] ), "  ·  participants spent " & FORMAT ( [Spend Uplift %], "0%" ) & " more than non-participants" )
+			```
+		displayFolder: UX
+		lineageTag: b4b36eb9-44e1-5729-9b9a-cbd95b978175
+
+	column Value
+		dataType: string
+		isHidden
+		lineageTag: 43dbf6ef-a8c5-5090-9b59-99aa2a8387e5
+		isNameInferred
+		summarizeBy: none
+		sourceColumn: [Value]
+
+		annotation SummarizationSetBy = Automatic
+
+	partition _Measures = calculated
+		mode: import
+		source =
+				{ BLANK () }

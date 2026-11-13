@@ -1,0 +1,58 @@
+table Rewards
+	lineageTag: 894923b1-a2d4-5909-ae79-8a8577b4a65d
+
+	column RewardID
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: c78a8594-9a0c-512d-9b3e-0d60de2484ed
+		summarizeBy: none
+		sourceColumn: RewardID
+
+		annotation SummarizationSetBy = Automatic
+
+	column RewardName
+		dataType: string
+		lineageTag: 2c939f37-084e-5d38-b378-77f96f1d16e6
+		summarizeBy: none
+		sourceColumn: RewardName
+
+		annotation SummarizationSetBy = Automatic
+
+	column RewardCategory
+		dataType: string
+		lineageTag: 9c1bcf0d-de2c-5bce-b407-58f9aad11bea
+		summarizeBy: none
+		sourceColumn: RewardCategory
+
+		annotation SummarizationSetBy = Automatic
+
+	column PointsRequired
+		dataType: int64
+		formatString: #,0
+		lineageTag: f0390bb1-e9ca-5ee7-8686-e2e31e7cd795
+		summarizeBy: none
+		sourceColumn: PointsRequired
+
+		annotation SummarizationSetBy = Automatic
+
+	column UnitCost
+		dataType: double
+		formatString: €#,0.00
+		lineageTag: 4efb2071-1164-54cf-bf7d-8ed3bce70a9d
+		summarizeBy: none
+		sourceColumn: UnitCost
+
+		annotation SummarizationSetBy = Automatic
+
+	partition Rewards = m
+		mode: import
+		source =
+				let
+				    Source = Csv.Document(File.Contents(DataFolder & "dim_reward.csv"), [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]),
+				    Promoted = Table.PromoteHeaders(Source, [PromoteAllScalars = true]),
+				    Typed = Table.TransformColumnTypes(Promoted, {{"RewardID", Int64.Type}, {"RewardName", type text}, {"RewardCategory", type text}, {"PointsRequired", Int64.Type}, {"UnitCost", type number}}, "en-US")
+				in
+				    Typed
+
+	annotation PBI_ResultType = Table

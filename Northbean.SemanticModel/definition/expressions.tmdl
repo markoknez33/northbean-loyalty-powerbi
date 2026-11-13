@@ -1,0 +1,7 @@
+expression DataFolder = "C:\Northbean\data\" meta [IsParameterQuery=true, Type="Text", IsParameterQueryRequired=true]
+	lineageTag: ece701fd-2c3a-514e-82f0-ef60deb0c073
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Text
+

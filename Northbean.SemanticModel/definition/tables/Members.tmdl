@@ -1,0 +1,82 @@
+table Members
+	lineageTag: 87df1ebd-6d7f-540d-b4ea-7248798570af
+
+	column MemberID
+		dataType: int64
+		formatString: 0
+		lineageTag: e8e9131c-53e0-58c7-bf7b-875b8c9db96b
+		summarizeBy: none
+		sourceColumn: MemberID
+
+		annotation SummarizationSetBy = Automatic
+
+	column JoinDate
+		dataType: dateTime
+		formatString: d mmm yyyy
+		lineageTag: 05472fe1-e18a-571e-b6f2-24fcb1c09926
+		summarizeBy: none
+		sourceColumn: JoinDate
+
+		annotation SummarizationSetBy = Automatic
+
+	column JoinChannel
+		dataType: string
+		lineageTag: 491b5559-1be0-5868-9c14-a986a4ba1f5d
+		summarizeBy: none
+		sourceColumn: JoinChannel
+
+		annotation SummarizationSetBy = Automatic
+
+	column AgeBand
+		dataType: string
+		lineageTag: 8322009f-afdd-5722-bded-1cbb86b3f248
+		summarizeBy: none
+		sourceColumn: AgeBand
+
+		annotation SummarizationSetBy = Automatic
+
+	column Tier
+		dataType: string
+		lineageTag: e6b2a8d2-6648-5251-87e9-78e2c7dd5ef7
+		summarizeBy: none
+		sourceColumn: Tier
+
+		annotation SummarizationSetBy = Automatic
+
+	column HomeStoreID
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 966af7e4-4f49-58ee-a6c9-c2bc2b1d16f4
+		summarizeBy: none
+		sourceColumn: HomeStoreID
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Join Month' = FORMAT ( 'Members'[JoinDate], "yyyy-MM" )
+		dataType: string
+		lineageTag: 49e959fd-5d54-5098-a4d9-82565009b12b
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Join Month Start' = DATE ( YEAR ( 'Members'[JoinDate] ), MONTH ( 'Members'[JoinDate] ), 1 )
+		dataType: dateTime
+		isHidden
+		formatString: mmm yyyy
+		lineageTag: c95b910d-ec44-5a9b-aad2-77802e234c5b
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	partition Members = m
+		mode: import
+		source =
+				let
+				    Source = Csv.Document(File.Contents(DataFolder & "dim_member.csv"), [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]),
+				    Promoted = Table.PromoteHeaders(Source, [PromoteAllScalars = true]),
+				    Typed = Table.TransformColumnTypes(Promoted, {{"MemberID", Int64.Type}, {"JoinDate", type date}, {"JoinChannel", type text}, {"AgeBand", type text}, {"Tier", type text}, {"HomeStoreID", Int64.Type}}, "en-US")
+				in
+				    Typed
+
+	annotation PBI_ResultType = Table
