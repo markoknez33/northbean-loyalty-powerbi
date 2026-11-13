@@ -41,7 +41,7 @@ Each page also has a **headline sentence written by DAX** that summarises the cu
 
 ## Design
 
-The UI was designed in code. Each page background (sidebar navigation, panels, typography) is an SVG rendered to PNG and set as the page wallpaper. Transparent visuals sit on top of it, and a custom theme (`NorthbeanEspresso.json`) styles them. Navigation uses page-navigation buttons, and the slicers are synced across pages.
+A dark, coffee-inspired interface built for quick reading. Each page uses a custom background with a sidebar menu and card layout, and a custom theme (`NorthbeanEspresso.json`) keeps colours and fonts consistent across all visuals. The sidebar works as page navigation, and the period, region and format filters stay in sync as you move between pages. Every KPI tile shows the value, the change vs last year in green or red, and a monthly trend line.
 
 ## How to open
 
@@ -53,4 +53,4 @@ The UI was designed in code. Each page background (sidebar navigation, panels, t
 To regenerate the data, run `python scripts/generate_data.py data`. It needs `numpy` and `pandas`, and the seed is fixed so the output is reproducible.
 
 ---
-Built by **Marko Knežević** · [pivotpeaks](https://pivotpeaks.com) · Northbean Coffee is a fictional brand.
+Built by **Marko Knežević** · Northbean Coffee is a fictional brand.
