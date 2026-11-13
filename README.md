@@ -2,9 +2,7 @@
 
 ![Cover](images/cover.png)
 
-This is an end-to-end Power BI portfolio project. It covers loyalty analytics for **Northbean Coffee**, a fictional 28-store coffee chain in Portugal. Every number in it is **synthetic**: Python generates the data with realistic seasonality, member behaviour, churn, point redemptions and campaign mechanics.
-
-The project is saved as a **PBIP** (Power BI Project). The model is stored as TMDL and the report as PBIR, so every measure, relationship and visual is a readable text file, ready for Git.
+This is an end-to-end Power BI portfolio project. It covers loyalty analytics for **Northbean Coffee**, a fictional 28-store coffee chain in Portugal. All data is **synthetic**, built to behave like a real business: seasonality, member churn, reward redemptions and campaigns.
 
 ## What the report answers
 
@@ -41,16 +39,13 @@ Each page also has a **headline sentence written by DAX** that summarises the cu
 
 ## Design
 
-A dark, coffee-inspired interface built for quick reading. Each page uses a custom background with a sidebar menu and card layout, and a custom theme (`NorthbeanEspresso.json`) keeps colours and fonts consistent across all visuals. The sidebar works as page navigation, and the period, region and format filters stay in sync as you move between pages. Every KPI tile shows the value, the change vs last year in green or red, and a monthly trend line.
+A dark, coffee-inspired look built for quick reading. A sidebar menu moves between pages, filters for period, region and store format stay in sync across the report, and every KPI tile shows the value, the change vs last year and a monthly trend.
 
 ## How to open
 
-1. Unzip the project to `C:\Northbean\`, so the CSV files end up in `C:\Northbean\data\`.
-   If you use a different folder, open **Transform data → Edit parameters** and change `DataFolder` (keep the trailing backslash).
-2. Open `Northbean.pbip` in Power BI Desktop. Older Desktop versions need the PBIP / PBIR preview features enabled.
-3. Click **Refresh**. A PBIP does not store data, so the visuals stay empty until the first refresh.
-
-To regenerate the data, run `python scripts/generate_data.py data`. It needs `numpy` and `pandas`, and the seed is fixed so the output is reproducible.
+1. Download the repository and put the `data` folder in `C:\Northbean\data\`
+2. Open `Northbean.pbip` in Power BI Desktop
+3. Click **Refresh**
 
 ---
 Built by **Marko Knežević** · Northbean Coffee is a fictional brand.
