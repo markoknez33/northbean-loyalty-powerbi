@@ -30,7 +30,7 @@ Each page also has a **headline sentence written by DAX** that summarises the cu
 - **Dimensions:** `Calendar` (a DAX date table, marked as the date table), `Stores`, `Members`, `Rewards`, `Campaigns`
 - **Disconnected axis:** `Cohort Offset` (M+1 … M+12), used by the cohort matrix
 - **Inactive relationship:** `Campaign Enrollments[CompletedDate]`, activated with `USERELATIONSHIP` for bonus points; new members by join date use `TREATAS`
-- **No implicit measures.** All 118 measures sit in one `_Measures` table, organised into display folders:
+- **No implicit measures.** All measures sit in one `_Measures` table, organised into display folders:
   - **Sales:** net sales, ticket, member share, food attach rate, traffic share
   - **Members:** active members, new members, returning % (vs the previous period of the same length), at-risk members (last visit 45–120 days ago), cohort retention
   - **Rewards:** points issued (purchases + campaign bonuses), redeemed, redemption rate, running liability, reward investment %
